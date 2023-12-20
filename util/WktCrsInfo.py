@@ -336,16 +336,16 @@ class WktCrsInfo:
             >> "VERT_DATUM"
 
         Valid input values for crs_type:
-            CrsType.VERT_DATUM: "VERT_DATUM"
-            CrsType.SPHEROID: "SPHEROID"
-            CrsType.VERT_CS: "VERT_CS"
-            CrsType.HZ_DATUM: "DATUM"
-            CrsType.PROJCS: "PROJCS"
-            CrsType.GEOGCS: "GEOGCS"
+            - CrsType.VERT_DATUM: "VERT_DATUM"
+            - CrsType.SPHEROID: "SPHEROID"
+            - CrsType.VERT_CS: "VERT_CS"
+            - CrsType.HZ_DATUM: "DATUM"
+            - CrsType.PROJCS: "PROJCS"
+            - CrsType.GEOGCS: "GEOGCS"
 
         Invalid input values for crs_type:
-            CrsType.COMPD_CS: "COMPD_CS"
-            CrsType.PROJECTION: "PROJECTION"
+            - CrsType.COMPD_CS: "COMPD_CS"
+            - CrsType.PROJECTION: "PROJECTION"
 
         :param crs_type: Any string contained within object CrsType
         :return: Epsg code as integer if successful, -1 if failure.

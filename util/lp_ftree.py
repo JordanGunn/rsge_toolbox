@@ -37,6 +37,7 @@ VECTOR_FMT = [
 ]
 
 # String Constants
+ASTERISK = '*'
 SOURCE_FOLDERS_KEY = "source_folders"
 FILE_EXTENSIONS_KEY = "file_extensions"
 
@@ -48,7 +49,7 @@ FOLDER_MAPPING = {
             f"03_RIEGL_RAW{os.path.sep}02_RXP{os.path.sep}**",
             f"06_RIEGL_PROC{os.path.sep}07_RDB"
         ],
-        "file_extensions": [".rxp", ".rdp"]
+        "file_extensions": [".rxp", ".rdp", ".zif"]
     },
 
     "COVERAGE": {
@@ -63,7 +64,7 @@ FOLDER_MAPPING = {
         "source_folders": [
             f"05_INS-GPS_PROC{os.path.sep}03_BASE"
         ],
-        "file_extensions": [".rinex", ".RINEX", ".obs", ".OBS"]
+        "file_extensions": [".rxo", ".rxn", ".obs", ".OBS"]
     },
 
     "CONTROL": {
@@ -86,13 +87,13 @@ FOLDER_MAPPING = {
             f"01_MON{os.path.sep}INS-GPS_1",
             f"02_FULL{os.path.sep}INS-GPS_1"
         ],
-        "file_extensions": [".dat", ".imu", ".igs", ".out", ".raw"]
+        "file_extensions": [".dat", ".imu", ".igs", ".out", ".raw", "POS."]
     }
     # Add more mappings as needed
 }
 
 
-def linux_shell_copy(src, dst):
+def linux_shell_copy(src, dst) -> None:
     """
     Perform recursive copy using Linux shell-command.
 
@@ -112,7 +113,7 @@ def linux_shell_copy(src, dst):
     subprocess.run(cmd, check=True)
 
 
-def win_shell_copy(src, dst):
+def win_shell_copy(src, dst) -> None:
 
     """
     Perform recursive copy using Windows shell-command.
@@ -130,6 +131,7 @@ def win_shell_copy(src, dst):
 def copy_folder_structure(src, dst) -> str:
     """
     Copies the folder structure from source to dest, excluding files.
+
     :param src: The source directory path.
     :param dst: The destination directory path.
     :return: The copied destination folder
@@ -146,20 +148,23 @@ def copy_folder_structure(src, dst) -> str:
     return dest_root
 
 
-def lp_ftree_json(path: str):
+def lp_ftree_json(path: str) -> dict:
+
     """
     Generates a JSON representation of the folder structure for the given path.
     """
+
     tree = {}
     if os.path.isdir(path):
         for item in os.listdir(path):
             sub_path = os.path.join(path, item)
             if os.path.isdir(sub_path):
                 tree[item] = lp_ftree_json(sub_path)
+
     return tree
 
 
-def lp_copy(src: str, dst: str, ignore_folders: list = None):
+def lp_copy(src: str, dst: str, ignore_folders: list = None) -> None:
 
     """
     Copy from the delivered source folder structure and translate
@@ -176,14 +181,10 @@ def lp_copy(src: str, dst: str, ignore_folders: list = None):
 
     for folder in FOLDER_MAPPING.keys():
 
-        if ignore_folders:
-            ucase_folder = folder.upper()  # upper case folder name
-            lcase_folder = folder.lower()  # lowercase folder name
-            if (
-                    lcase_folder in ignore_folders
-            ) or (
-                    ucase_folder in ignore_folders
-            ):  # optional skip folder
+        if ignore_folders:  # omit folders if any in ignore folders.
+            lcase_in_ignore = (folder.lower() in ignore_folders)  # upper case folder name
+            ucase_in_ignore = (folder.upper() in ignore_folders)  # lowercase folder name
+            if lcase_in_ignore or ucase_in_ignore:  # optional skip folder
                 continue
 
         copy_files = []
@@ -191,15 +192,14 @@ def lp_copy(src: str, dst: str, ignore_folders: list = None):
         os.makedirs(folder_dst, exist_ok=True)
         sources = FOLDER_MAPPING[folder][SOURCE_FOLDERS_KEY]
         extensions = FOLDER_MAPPING[folder][FILE_EXTENSIONS_KEY]
-
         for source in sources:  # Gather files with desired extensions
-            is_recursive = source.endswith("*")
+            is_recursive = source.endswith(ASTERISK)
             src_full = os.path.join(src, source)  # join the src root with current relative path
             files = []
             for ext in extensions:
-                files.extend(
-                    glob(os.path.join(src_full, "*" + ext), recursive=is_recursive)
-                )
+                path_pattern = os.path.join(src_full, ASTERISK + ext)
+                ext_glob = glob(path_pattern, recursive=is_recursive)
+                files.extend(ext_glob)
             if files:
                 copy_files.extend(files)
 
